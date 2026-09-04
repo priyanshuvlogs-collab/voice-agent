@@ -57,11 +57,16 @@ export function createApp() {
     res.sendFile(path.join(publicDir, "index.html"));
   });
 
+  app.get("/how-it-works", (_req, res) => {
+    res.sendFile(path.join(publicDir, "how-it-works.html"));
+  });
+
   app.get("/api", (_req, res) => {
     res.status(200).json({
       service: "ai-voice-receptionist",
       docs: "See README.md",
       interface: "/",
+      howItWorks: "/how-it-works",
       health: "/health",
       tools: "/tools/definitions",
     });

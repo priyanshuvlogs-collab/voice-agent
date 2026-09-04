@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How It Works — AI Voice Receptionist</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0c1117;
+        --panel: #161e28;
+        --soft: #223041;
+        --line: #314155;
+        --text: #e8eef6;
+        --muted: #93a4b8;
+        --accent: #3ecf8e;
+        --accent-dim: rgba(62, 207, 142, 0.14);
+        --twilio: #ff6b7d;
+        --vapi: #8eb4ff;
+        --svc: #3ecf8e;
+        --ghl: #6eefe3;
+        --radius: 16px;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "DM Sans", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1000px 520px at 0% -10%, rgba(62, 207, 142, 0.16), transparent 55%),
+          radial-gradient(800px 480px at 100% 0%, rgba(91, 141, 239, 0.14), transparent 50%),
+          linear-gradient(180deg, #101820, #0a0e13);
+      }
+
+      .shell {
+        width: min(1100px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 2rem 0 4rem;
+      }
+
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+      }
+
+      .nav a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.92rem;
+      }
+
+      .nav a:hover { color: var(--text); }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-dim);
+      }
+
+      h1 {
+        margin: 0.55rem 0 0.7rem;
+        font-size: clamp(2rem, 4.2vw, 3.1rem);
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+      }
+
+      .lede {
+        margin: 0 0 1.5rem;
+        max-width: 46rem;
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.55;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-bottom: 1.25rem;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: var(--soft);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 0.6rem 0.95rem;
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      button:hover { border-color: #5a738f; }
+      button.primary {
+        background: var(--accent);
+        border-color: transparent;
+        color: #062616;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .progress {
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(49, 65, 85, 0.7);
+        overflow: hidden;
+        margin-bottom: 1.25rem;
+      }
+
+      .progress > span {
+        display: block;
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), #5b8def);
+        transition: width 0.35s ease;
+      }
+
+      .layout {
+        display: grid;
+        gap: 1rem;
+      }
+
+      @media (min-width: 920px) {
+        .layout {
+          grid-template-columns: 280px 1fr;
+          align-items: start;
+        }
+      }
+
+      .steps {
+        display: grid;
+        gap: 0.45rem;
+      }
+
+      .step-tab {
+        text-align: left;
+        padding: 0.75rem 0.85rem;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 600;
+        width: 100%;
+      }
+
+      .step-tab.active {
+        background: rgba(26, 34, 44, 0.95);
+        border-color: var(--line);
+        color: var(--text);
+      }
+
+      .step-tab .num {
+        display: inline-block;
+        width: 1.4rem;
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.8rem;
+      }
+
+      .stage {
+        background: rgba(22, 30, 40, 0.95);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+        min-height: 520px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+      }
+
+      .stage-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem 1.15rem;
+        border-bottom: 1px solid var(--line);
+        background: rgba(34, 48, 65, 0.45);
+      }
+
+      .stage-head h2 {
+        margin: 0;
+        font-size: 1.15rem;
+      }
+
+      .badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.35rem 0.55rem;
+        border-radius: 8px;
+      }
+
+      .badge.twilio { background: rgba(242, 47, 70, 0.16); color: var(--twilio); }
+      .badge.vapi { background: rgba(91, 141, 239, 0.16); color: var(--vapi); }
+      .badge.svc { background: var(--accent-dim); color: var(--svc); }
+      .badge.ghl { background: rgba(40, 199, 183, 0.16); color: var(--ghl); }
+      .badge.out { background: rgba(240, 180, 41, 0.14); color: #f0b429; }
+
+      .stage-body {
+        padding: 1.15rem 1.2rem 1.35rem;
+        display: grid;
+        gap: 1rem;
+      }
+
+      .story {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+        font-size: 1rem;
+      }
+
+      .story strong { color: var(--text); }
+
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .node {
+        padding: 0.55rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #0f1620;
+        font-size: 0.85rem;
+        font-weight: 650;
+      }
+
+      .node.on {
+        border-color: rgba(62, 207, 142, 0.55);
+        box-shadow: 0 0 0 3px var(--accent-dim);
+      }
+
+      .arrow {
+        color: var(--muted);
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .cards {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      @media (min-width: 720px) {
+        .cards.two { grid-template-columns: 1fr 1fr; }
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(12, 17, 23, 0.65);
+        padding: 0.9rem;
+      }
+
+      .card h3 {
+        margin: 0 0 0.4rem;
+        font-size: 0.95rem;
+      }
+
+      .card p, .card li {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.45;
+      }
+
+      .card ul {
+        margin: 0.45rem 0 0;
+        padding-left: 1.1rem;
+        color: var(--muted);
+      }
+
+      pre {
+        margin: 0;
+        padding: 0.9rem;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #0b1015;
+        overflow: auto;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.76rem;
+        line-height: 1.5;
+        color: #d7e3f0;
+        max-height: 260px;
+        white-space: pre-wrap;
+      }
+
+      .endpoint {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.85rem;
+      }
+
+      .method {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.18rem 0.4rem;
+        border-radius: 6px;
+        background: var(--accent-dim);
+        color: var(--accent);
+      }
+
+      .method.post {
+        background: rgba(91, 141, 239, 0.16);
+        color: var(--vapi);
+      }
+
+      .footnote {
+        margin-top: 1rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .hidden { display: none !important; }
+
+      .pulse {
+        animation: pulse 1.1s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.55; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="nav">
+        <a href="/">← Operator interface</a>
+        <a href="/tools/definitions" target="_blank" rel="noreferrer">Tool JSON</a>
+      </div>
+
+      <div class="eyebrow">Detailed system walkthrough</div>
+      <h1>How does it work?</h1>
+      <p class="lede">
+        Follow one inbound phone call from the moment it rings, through Vapi’s
+        conversational AI, into this microservice’s tool handlers, and out to
+        GoHighLevel for availability, contacts, and bookings.
+      </p>
+
+      <div class="controls">
+        <button class="primary" id="btn-play" type="button">Play walkthrough</button>
+        <button id="btn-prev" type="button">Previous</button>
+        <button id="btn-next" type="button">Next step</button>
+        <button id="btn-reset" type="button">Reset</button>
+      </div>
+      <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+      <div class="layout">
+        <aside class="steps" id="step-tabs"></aside>
+        <section class="stage" id="stage"></section>
+      </div>
+
+      <p class="footnote">
+        Demo uses live health/tool probes from this running service. GHL write
+        actions require real credentials and are shown as request/response shapes.
+      </p>
+    </div>
+
+    <script>
+      const steps = [
+        {
+          id: "overview",
+          title: "System overview",
+          badge: "svc",
+          badgeLabel: "Architecture",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [0, 1, 2, 3, 4],
+          story:
+            "This microservice is the <strong>control plane</strong> between phone audio (Twilio/Vapi) and business systems (GoHighLevel). Vapi owns the conversation. This service validates webhooks and executes typed tools against GHL API v2.",
+          cards: [
+            {
+              title: "What the caller experiences",
+              html: "<p>They dial the business number, speak naturally, ask for availability, leave contact details, and book an appointment — without waiting on hold.</p>",
+            },
+            {
+              title: "What this service owns",
+              html: "<ul><li>Twilio voice webhook (optional pre-connect)</li><li>Vapi server URL / tool-calls</li><li>GHL contacts, free-slots, appointments</li><li>Validation, logging, health</li></ul>",
+            },
+          ],
+          codeTitle: "Public surface",
+          code: `GET  /                 Operator UI
+GET  /how-it-works     This walkthrough
+GET  /health           Liveness
+POST /webhooks/twilio/voice
+POST /webhooks/vapi
+GET  /tools/definitions
+POST /tools/:toolName`,
+        },
+        {
+          id: "inbound",
+          title: "1. Inbound call arrives",
+          badge: "twilio",
+          badgeLabel: "Twilio",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [0, 1],
+          story:
+            "A customer dials the Twilio number. Preferred production setup: the number is <strong>imported into Vapi</strong>, so Vapi answers and streams audio immediately. This API can still receive Twilio’s Voice webhook for logging or custom TwiML.",
+          cards: [
+            {
+              title: "Webhook",
+              html: '<p class="endpoint"><span class="method post">POST</span> /webhooks/twilio/voice</p><p style="margin-top:.55rem">Signature validated with <code>X-Twilio-Signature</code> when enabled.</p>',
+            },
+            {
+              title: "TwiML response",
+              html: "<p>Returns a short greeting, then pauses / optionally SIP-connects while Vapi owns media.</p>",
+            },
+          ],
+          codeTitle: "Example Twilio form body",
+          code: `CallSid=CAxxxxxxxx
+From=+15551234567
+To=+15557654321
+CallStatus=ringing
+Direction=inbound`,
+        },
+        {
+          id: "conversation",
+          title: "2. Vapi runs the conversation",
+          badge: "vapi",
+          badgeLabel: "Vapi",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [1, 2],
+          story:
+            "Vapi’s assistant greets the caller, collects intent (e.g. “Do you have anything tomorrow afternoon?”), and decides when to call tools. The assistant’s <strong>Server URL</strong> points at this service.",
+          cards: [
+            {
+              title: "Assistant config",
+              html: "<ul><li>System prompt = receptionist persona</li><li>Tools = availability / contact / book</li><li>Server URL = https://host/webhooks/vapi</li><li>Shared secret = VAPI_SERVER_URL_SECRET</li></ul>",
+            },
+            {
+              title: "Latency path",
+              html: "<p>Speech → Vapi STT/LLM → tool HTTP → GHL → tool result → TTS back to caller. Keep handlers thin and synchronous.</p>",
+            },
+          ],
+          codeTitle: "Vapi event types this API handles",
+          code: `tool-calls / function-call
+assistant-request
+status-update
+end-of-call-report
+speech-update / transcript (ack)`,
+        },
+        {
+          id: "tool-call",
+          title: "3. Tool call hits this API",
+          badge: "svc",
+          badgeLabel: "Service",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [2, 3],
+          story:
+            "When the model needs data or a write, Vapi POSTs a <strong>tool-calls</strong> payload. We parse the function name + arguments, validate with Zod, inject the caller’s phone when missing, and dispatch to a GHL handler.",
+          cards: [
+            {
+              title: "Entry points",
+              html: '<p class="endpoint"><span class="method post">POST</span> /webhooks/vapi</p><p class="endpoint" style="margin-top:.4rem"><span class="method post">POST</span> /tools/:toolName</p>',
+            },
+            {
+              title: "Safety",
+              html: "<ul><li>Optional shared-secret header</li><li>Zod schemas per tool</li><li>Structured AppError / UpstreamError</li><li>Pino request logs</li></ul>",
+            },
+          ],
+          codeTitle: "Simplified tool-calls payload",
+          code: `{
+  "message": {
+    "type": "tool-calls",
+    "call": { "customer": { "number": "+15551234567" } },
+    "toolCallList": [{
+      "id": "call_01",
+      "function": {
+        "name": "check_availability",
+        "arguments": {
+          "startDate": "2026-09-05",
+          "endDate": "2026-09-06",
+          "timezone": "America/New_York"
+        }
+      }
+    }]
+  }
+}`,
+        },
+        {
+          id: "availability",
+          title: "4. Check calendar availability",
+          badge: "ghl",
+          badgeLabel: "GHL",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [3, 4],
+          story:
+            "Tool <code>check_availability</code> calls GHL <strong>GET /calendars/{id}/free-slots</strong>, flattens date-keyed slots, caps the list for voice (first 8), and returns ISO start/end times the assistant can speak.",
+          cards: [
+            {
+              title: "Inputs",
+              html: "<ul><li>startDate / endDate (required)</li><li>timezone (default DEFAULT_TIMEZONE)</li><li>optional calendarId override</li></ul>",
+            },
+            {
+              title: "Spoken outcome",
+              html: "<p>“I have openings at 2:00 and 3:30 tomorrow afternoon. Which works better?”</p>",
+            },
+          ],
+          codeTitle: "Tool result shape",
+          code: `{
+  "ok": true,
+  "message": "Found 3 open slot(s).",
+  "data": {
+    "timezone": "America/New_York",
+    "slots": [
+      { "startTime": "2026-09-05T18:00:00.000Z", "endTime": "2026-09-05T18:30:00.000Z" },
+      { "startTime": "2026-09-05T19:30:00.000Z", "endTime": "2026-09-05T20:00:00.000Z" }
+    ]
+  }
+}`,
+        },
+        {
+          id: "contact",
+          title: "5. Find or create the contact",
+          badge: "ghl",
+          badgeLabel: "GHL",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [3, 4],
+          story:
+            "Before booking, we resolve a GHL contact. <code>find_contact</code> searches by E.164 phone. <code>create_contact</code> / <code>ensureContact</code> upserts with tags like <code>voice-receptionist</code> so CRM attribution stays clear.",
+          cards: [
+            {
+              title: "Phone normalization",
+              html: "<p>10-digit US → +1… · already-E.164 preserved · used for search + create.</p>",
+            },
+            {
+              title: "Why upsert?",
+              html: "<p>Repeat callers should map to one contact. Booking never creates duplicate people for the same number when lookup succeeds.</p>",
+            },
+          ],
+          codeTitle: "ensureContact flow",
+          code: `phone = normalizePhoneE164(caller)
+existing = GHL GET /contacts/?query=phone
+if existing: return existing
+else: GHL POST /contacts/ {
+  locationId, firstName, phone, tags: ["voice-receptionist"]
+}`,
+        },
+        {
+          id: "book",
+          title: "6. Book the appointment",
+          badge: "ghl",
+          badgeLabel: "GHL",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [3, 4],
+          story:
+            "<code>book_appointment</code> posts to GHL <strong>/calendars/events/appointments</strong> with contactId, start/end, calendar, timezone, and confirmed status. If contactId is missing, it auto-ensures a contact from firstName + phone.",
+          cards: [
+            {
+              title: "Defaults",
+              html: "<ul><li>Duration = APPOINTMENT_DURATION_MINUTES</li><li>Title = “{BUSINESS_NAME} Appointment”</li><li>appointmentStatus = confirmed</li><li>toNotify = true</li></ul>",
+            },
+            {
+              title: "Caller hears",
+              html: "<p>“You’re booked for Friday at 2:00 PM. You’ll get a confirmation shortly. Anything else I can help with?”</p>",
+            },
+          ],
+          codeTitle: "Vapi response wrapper",
+          code: `{
+  "results": [{
+    "toolCallId": "call_01",
+    "result": "{\\"ok\\":true,\\"message\\":\\"Appointment booked...\\",\\"data\\":{...}}"
+  }]
+}`,
+        },
+        {
+          id: "close",
+          title: "7. Call ends & ops signals",
+          badge: "out",
+          badgeLabel: "Lifecycle",
+          nodes: ["Caller", "Twilio", "Vapi", "This API", "GoHighLevel"],
+          active: [2, 3],
+          story:
+            "Vapi sends <strong>end-of-call-report</strong> / status updates. This API acknowledges them (ready for analytics hooks). Ops watches <code>/health</code>, structured logs, and the operator UI’s live probes.",
+          cards: [
+            {
+              title: "Production checklist",
+              html: "<ul><li>PUBLIC_BASE_URL for Twilio signatures</li><li>VAPI_SERVER_URL_SECRET set</li><li>GHL private integration scopes</li><li>Number attached in Vapi dashboard</li></ul>",
+            },
+            {
+              title: "Try next",
+              html: "<p>Open the operator UI, load tool definitions, then wire the four tools into your Vapi assistant.</p>",
+            },
+          ],
+          codeTitle: "Live health (fetched)",
+          code: "Loading /health…",
+          liveHealth: true,
+        },
+      ];
+
+      let index = 0;
+      let timer = null;
+
+      const tabsEl = document.getElementById("step-tabs");
+      const stageEl = document.getElementById("stage");
+      const barEl = document.getElementById("progress-bar");
+      const btnPlay = document.getElementById("btn-play");
+      const btnPrev = document.getElementById("btn-prev");
+      const btnNext = document.getElementById("btn-next");
+      const btnReset = document.getElementById("btn-reset");
+
+      function renderTabs() {
+        tabsEl.innerHTML = steps
+          .map(
+            (s, i) => `
+          <button class="step-tab ${i === index ? "active" : ""}" data-i="${i}" type="button">
+            <span class="num">${String(i).padStart(2, "0")}</span>${s.title}
+          </button>`,
+          )
+          .join("");
+      }
+
+      async function renderStage() {
+        const s = steps[index];
+        barEl.style.width = `${((index + 1) / steps.length) * 100}%`;
+        btnPrev.disabled = index === 0;
+        btnNext.disabled = index === steps.length - 1;
+
+        const nodes = s.nodes
+          .map((n, i) => {
+            const on = (s.active || []).includes(i) ? "on pulse" : "";
+            const arrow =
+              i < s.nodes.length - 1 ? '<span class="arrow">→</span>' : "";
+            return `<span class="node ${on}">${n}</span>${arrow}`;
+          })
+          .join("");
+
+        let code = s.code;
+        if (s.liveHealth) {
+          try {
+            const res = await fetch("/health");
+            const data = await res.json();
+            code = JSON.stringify(data, null, 2);
+          } catch (err) {
+            code = String(err);
+          }
+        }
+
+        stageEl.innerHTML = `
+          <div class="stage-head">
+            <h2>${s.title}</h2>
+            <span class="badge ${s.badge}">${s.badgeLabel}</span>
+          </div>
+          <div class="stage-body">
+            <p class="story">${s.story}</p>
+            <div class="diagram">${nodes}</div>
+            <div class="cards two">
+              ${s.cards
+                .map(
+                  (c) => `<article class="card"><h3>${c.title}</h3>${c.html}</article>`,
+                )
+                .join("")}
+            </div>
+            <div>
+              <h3 style="margin:0 0 .45rem;font-size:.92rem">${s.codeTitle}</h3>
+              <pre>${escapeHtml(code)}</pre>
+            </div>
+          </div>`;
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      async function go(i) {
+        index = Math.max(0, Math.min(steps.length - 1, i));
+        renderTabs();
+        await renderStage();
+      }
+
+      function stopAuto() {
+        if (timer) clearInterval(timer);
+        timer = null;
+        btnPlay.textContent = "Play walkthrough";
+      }
+
+      function startAuto() {
+        stopAuto();
+        btnPlay.textContent = "Pause";
+        timer = setInterval(async () => {
+          if (index >= steps.length - 1) {
+            stopAuto();
+            return;
+          }
+          await go(index + 1);
+        }, 4500);
+      }
+
+      tabsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-i]");
+        if (!btn) return;
+        stopAuto();
+        go(Number(btn.dataset.i));
+      });
+
+      btnPrev.addEventListener("click", () => {
+        stopAuto();
+        go(index - 1);
+      });
+      btnNext.addEventListener("click", () => {
+        stopAuto();
+        go(index + 1);
+      });
+      btnReset.addEventListener("click", () => {
+        stopAuto();
+        go(0);
+      });
+      btnPlay.addEventListener("click", () => {
+        if (timer) stopAuto();
+        else {
+          if (index >= steps.length - 1) go(0).then(startAuto);
+          else startAuto();
+        }
+      });
+
+      go(0);
+    </script>
+  </body>
+</html>
