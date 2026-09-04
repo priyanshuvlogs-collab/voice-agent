@@ -66,6 +66,8 @@ This service also exposes `POST /webhooks/twilio/voice` for logging or custom pr
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| `GET` | `/` | Operator interface (HTML) |
+| `GET` | `/api` | Service discovery JSON |
 | `GET` | `/health` | Liveness |
 | `GET` | `/health/ready` | Readiness |
 | `POST` | `/webhooks/twilio/voice` | Twilio Voice webhook (signature validated) |

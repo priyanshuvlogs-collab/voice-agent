@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Voice Receptionist — Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #1a222c;
+        --bg-soft: #243040;
+        --line: #314155;
+        --text: #e8eef6;
+        --muted: #93a4b8;
+        --accent: #3ecf8e;
+        --accent-dim: rgba(62, 207, 142, 0.14);
+        --warn: #f0b429;
+        --twilio: #f22f46;
+        --vapi: #5b8def;
+        --ghl: #28c7b7;
+        --radius: 14px;
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "DM Sans", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 600px at 10% -10%, rgba(62, 207, 142, 0.18), transparent 55%),
+          radial-gradient(900px 500px at 100% 0%, rgba(91, 141, 239, 0.16), transparent 50%),
+          linear-gradient(180deg, #101820 0%, #0c1117 100%);
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 2.5rem 0 4rem;
+      }
+
+      header {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-dim);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+      }
+
+      .lede {
+        margin: 0;
+        max-width: 42rem;
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.55;
+      }
+
+      .status-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(26, 34, 44, 0.85);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .pill strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .pill.live strong {
+        color: var(--accent);
+      }
+
+      .grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(12, 1fr);
+      }
+
+      .panel {
+        grid-column: span 12;
+        background: rgba(26, 34, 44, 0.92);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      @media (min-width: 860px) {
+        .panel.half {
+          grid-column: span 6;
+        }
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.15rem;
+        border-bottom: 1px solid var(--line);
+        background: rgba(36, 48, 64, 0.45);
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .panel-body {
+        padding: 1rem 1.15rem 1.2rem;
+      }
+
+      .stack {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .endpoint {
+        display: grid;
+        gap: 0.35rem;
+        padding: 0.85rem 0.95rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(15, 20, 25, 0.55);
+        transition: border-color 0.2s ease, transform 0.2s ease;
+      }
+
+      .endpoint:hover {
+        border-color: #4a627d;
+        transform: translateY(-1px);
+      }
+
+      .endpoint-top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .method {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        padding: 0.2rem 0.45rem;
+        border-radius: 6px;
+        background: var(--accent-dim);
+        color: var(--accent);
+      }
+
+      .method.post {
+        background: rgba(91, 141, 239, 0.16);
+        color: #9cbcff;
+      }
+
+      .path {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.9rem;
+      }
+
+      .desc {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .flow {
+        display: grid;
+        gap: 0.65rem;
+      }
+
+      .flow-step {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.85rem;
+        align-items: start;
+      }
+
+      .badge {
+        min-width: 4.5rem;
+        text-align: center;
+        padding: 0.35rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
+
+      .badge.twilio {
+        background: rgba(242, 47, 70, 0.16);
+        color: #ff8a98;
+      }
+      .badge.vapi {
+        background: rgba(91, 141, 239, 0.16);
+        color: #9cbcff;
+      }
+      .badge.ghl {
+        background: rgba(40, 199, 183, 0.16);
+        color: #7eefe4;
+      }
+      .badge.svc {
+        background: var(--accent-dim);
+        color: var(--accent);
+      }
+
+      .tool {
+        padding: 0.9rem 0.95rem;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(15, 20, 25, 0.55);
+      }
+
+      .tool h3 {
+        margin: 0 0 0.35rem;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.92rem;
+        color: var(--accent);
+      }
+
+      .tool p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .params {
+        margin: 0.65rem 0 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+
+      .params li {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem;
+        padding: 0.22rem 0.45rem;
+        border-radius: 6px;
+        background: var(--bg-soft);
+        color: #c9d6e6;
+      }
+
+      pre {
+        margin: 0;
+        padding: 0.95rem;
+        overflow: auto;
+        border-radius: 12px;
+        background: #0b1015;
+        border: 1px solid var(--line);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        color: #d7e3f0;
+        max-height: 280px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: var(--bg-soft);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 0.55rem 0.85rem;
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+
+      button:hover {
+        border-color: #5a738f;
+        background: #2c3b4e;
+      }
+
+      button.primary {
+        background: var(--accent);
+        border-color: transparent;
+        color: #062616;
+      }
+
+      button.primary:hover {
+        background: #58db9f;
+      }
+
+      .footer {
+        margin-top: 1.5rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="eyebrow">Operator interface</div>
+        <h1>AI Voice Receptionist</h1>
+        <p class="lede">
+          Low-latency voice microservice: Twilio inbound calls, Vapi conversation
+          orchestration, and GoHighLevel tool execution for availability, contacts,
+          and bookings.
+        </p>
+        <div class="status-row">
+          <div class="pill live" id="health-pill">
+            Status: <strong id="health-text">checking…</strong>
+          </div>
+          <div class="pill">Service: <strong>ai-voice-receptionist</strong></div>
+          <div class="pill">Timezone: <strong id="tz-text">—</strong></div>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="panel half">
+          <div class="panel-head">
+            <h2>Call &amp; tool flow</h2>
+          </div>
+          <div class="panel-body flow">
+            <div class="flow-step">
+              <span class="badge twilio">Twilio</span>
+              <p class="desc">Inbound PSTN call hits the Twilio number / voice webhook.</p>
+            </div>
+            <div class="flow-step">
+              <span class="badge vapi">Vapi</span>
+              <p class="desc">Assistant runs the conversation and emits tool-calls in real time.</p>
+            </div>
+            <div class="flow-step">
+              <span class="badge svc">Service</span>
+              <p class="desc">This API validates webhooks and dispatches typed tool handlers.</p>
+            </div>
+            <div class="flow-step">
+              <span class="badge ghl">GHL</span>
+              <p class="desc">Contacts, free-slots, and appointments via GoHighLevel API v2.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel half">
+          <div class="panel-head">
+            <h2>Live probes</h2>
+            <div class="actions">
+              <button class="primary" id="btn-health" type="button">Refresh health</button>
+              <button id="btn-tools" type="button">Load tools</button>
+            </div>
+          </div>
+          <div class="panel-body stack">
+            <pre id="probe-output">Click “Refresh health” or “Load tools” to inspect live JSON.</pre>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>HTTP interface</h2>
+          </div>
+          <div class="panel-body stack" id="endpoints">
+            <article class="endpoint">
+              <div class="endpoint-top">
+                <span class="method">GET</span>
+                <span class="path">/health</span>
+              </div>
+              <p class="desc">Liveness probe used by load balancers and this console.</p>
+            </article>
+            <article class="endpoint">
+              <div class="endpoint-top">
+                <span class="method">GET</span>
+                <span class="path">/health/ready</span>
+              </div>
+              <p class="desc">Readiness probe for deployment orchestration.</p>
+            </article>
+            <article class="endpoint">
+              <div class="endpoint-top">
+                <span class="method post">POST</span>
+                <span class="path">/webhooks/twilio/voice</span>
+              </div>
+              <p class="desc">Twilio Voice webhook — signature validated, returns TwiML.</p>
+            </article>
+            <article class="endpoint">
+              <div class="endpoint-top">
+                <span class="method post">POST</span>
+                <span class="path">/webhooks/vapi</span>
+              </div>
+              <p class="desc">Vapi server URL for tool-calls, status updates, and end-of-call reports.</p>
+            </article>
+            <article class="endpoint">
+              <div class="endpoint-top">
+                <span class="method">GET</span>
+                <span class="path">/tools/definitions</span>
+              </div>
+              <p class="desc">Machine-readable tool schemas to paste into the Vapi assistant.</p>
+            </article>
+            <article class="endpoint">
+              <div class="endpoint-top">
+                <span class="method post">POST</span>
+                <span class="path">/tools/:toolName</span>
+              </div>
+              <p class="desc">Direct tool execution endpoint for discrete Vapi custom tool URLs.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Vapi ↔ GHL tools</h2>
+          </div>
+          <div class="panel-body stack" id="tools-list">
+            <p class="desc">Loading tool definitions…</p>
+          </div>
+        </section>
+      </div>
+
+      <p class="footer">
+        Interface served by the voice receptionist service · JSON APIs remain available at the paths above
+      </p>
+    </div>
+
+    <script>
+      const healthText = document.getElementById("health-text");
+      const probeOutput = document.getElementById("probe-output");
+      const toolsList = document.getElementById("tools-list");
+      const tzText = document.getElementById("tz-text");
+
+      function pretty(data) {
+        return JSON.stringify(data, null, 2);
+      }
+
+      async function refreshHealth() {
+        const res = await fetch("/health");
+        const data = await res.json();
+        healthText.textContent = data.status || (data.ok ? "healthy" : "degraded");
+        probeOutput.textContent = pretty(data);
+        return data;
+      }
+
+      async function loadTools() {
+        const res = await fetch("/tools/definitions");
+        const data = await res.json();
+        probeOutput.textContent = pretty(data);
+
+        const tools = data.tools || [];
+        toolsList.innerHTML = "";
+        for (const tool of tools) {
+          const fn = tool.function || {};
+          const props = (fn.parameters && fn.parameters.properties) || {};
+          const required = new Set((fn.parameters && fn.parameters.required) || []);
+          const el = document.createElement("article");
+          el.className = "tool";
+          el.innerHTML = `
+            <h3>${fn.name || "tool"}</h3>
+            <p>${fn.description || ""}</p>
+            <ul class="params">
+              ${Object.keys(props)
+                .map(
+                  (key) =>
+                    `<li>${key}${required.has(key) ? "*" : ""}</li>`,
+                )
+                .join("")}
+            </ul>
+          `;
+          toolsList.appendChild(el);
+        }
+        return data;
+      }
+
+      document.getElementById("btn-health").addEventListener("click", () => {
+        refreshHealth().catch((err) => {
+          healthText.textContent = "unreachable";
+          probeOutput.textContent = String(err);
+        });
+      });
+
+      document.getElementById("btn-tools").addEventListener("click", () => {
+        loadTools().catch((err) => {
+          probeOutput.textContent = String(err);
+        });
+      });
+
+      tzText.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      refreshHealth().catch(() => {
+        healthText.textContent = "unreachable";
+      });
+      loadTools().catch(() => {
+        toolsList.innerHTML = `<p class="desc">Unable to load tool definitions.</p>`;
+      });
+    </script>
+  </body>
+</html>
