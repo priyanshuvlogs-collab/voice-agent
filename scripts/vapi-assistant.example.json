@@ -1,0 +1,27 @@
+{
+  "name": "AI Voice Receptionist",
+  "firstMessage": "Thanks for calling. How can I help you today?",
+  "endCallMessage": "You're all set. Have a great day.",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.4,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a concise phone receptionist. Collect the caller's name and callback number, check calendar availability, create or update their contact, then book a confirmed appointment. Keep spoken replies under 25 words. Repeat the chosen time back before booking. Never invent open slots."
+      }
+    ]
+  },
+  "server": {
+    "url": "https://YOUR_PUBLIC_HOST/webhooks/vapi",
+    "timeoutSeconds": 8
+  },
+  "serverMessages": [
+    "assistant-request",
+    "tool-calls",
+    "end-of-call-report",
+    "status-update",
+    "transfer-destination-request"
+  ]
+}

@@ -1,0 +1,17 @@
+process.env.NODE_ENV = "test";
+process.env.LOG_LEVEL = "silent";
+process.env.PORT = "3099";
+process.env.VALIDATE_TWILIO_SIGNATURE = "false";
+process.env.VALIDATE_VAPI_SIGNATURE = "false";
+process.env.TWILIO_ACCOUNT_SID = "ACtesttesttesttesttesttesttesttest";
+process.env.TWILIO_AUTH_TOKEN = "twilio-auth-token";
+process.env.TWILIO_PHONE_NUMBER = "+15551234567";
+process.env.VAPI_API_KEY = "vapi-test-key";
+process.env.VAPI_ASSISTANT_ID = "asst_test";
+process.env.VAPI_PHONE_NUMBER_ID = "pn_test";
+process.env.VAPI_WEBHOOK_SECRET = "vapi-webhook-secret";
+process.env.GHL_API_KEY = "ghl-test-key";
+process.env.GHL_LOCATION_ID = "loc_test";
+process.env.GHL_CALENDAR_ID = "cal_test";
+process.env.GHL_TIMEZONE = "America/New_York";
+process.env.WEBHOOK_BASE_URL = "https://voice.example.test";
